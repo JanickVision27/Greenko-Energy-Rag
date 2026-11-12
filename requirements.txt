@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------------------
+# Energy Operations RAG Assistant — runtime dependencies
+# Install with:  pip install -r requirements.txt
+# Lightweight variant (no torch, TF-IDF embeddings): requirements-minimal.txt
+# ---------------------------------------------------------------------------
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.1
+
+# Embeddings: all-MiniLM-L6-v2 (384-dim, CPU). Pulls in torch + transformers.
+sentence-transformers==3.0.1
+
+# LLM: llama-3.3-70b-versatile via Groq.
+# >=1.0 is required: 0.11 crashes under httpx>=0.28 ("unexpected keyword argument 'proxies'").
+groq==1.7.0
+
+python-dotenv==1.0.1
+python-multipart==0.0.9

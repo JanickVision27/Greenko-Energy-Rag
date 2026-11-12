@@ -1,0 +1,24 @@
+# Secrets — never commit real keys
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated artefacts (the evaluation report is committed on purpose)
+outputs/*
+!outputs/evaluation_results.json
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

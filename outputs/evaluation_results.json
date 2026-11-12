@@ -1,0 +1,140 @@
+{
+  "generated_at_utc": "2026-11-12T14:30:20+00:00",
+  "pipeline": {
+    "llm_model": "llama-3.3-70b-versatile",
+    "llm_key_present": false,
+    "embedding_model": "tfidf-fallback",
+    "embedding_backend": "tfidf-fallback",
+    "embedding_dim": 164,
+    "embedding_fallback_reason": "sentence-transformers not importable (ModuleNotFoundError: No module named 'sentence_transformers')",
+    "top_k": 3,
+    "corpus": {
+      "documents": 4,
+      "chunks": 4,
+      "words": 112,
+      "chunks_per_source": {
+        "grid_operations_note.md": 1,
+        "hydro_safety_brief.md": 1,
+        "solar_inverter_sop.md": 1,
+        "wind_turbine_maintenance.md": 1
+      },
+      "chunk_words_target": 250,
+      "chunk_words_overlap": 25
+    },
+    "python": "3.11.2",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36"
+  },
+  "summary": {
+    "questions": 2,
+    "source_attribution_correct": 2,
+    "source_accuracy": 1.0,
+    "llm_answers_generated": 0,
+    "mean_latency_ms": 0.8
+  },
+  "questions": [
+    {
+      "question": "What should be checked for inverter derating?",
+      "expected_source": "solar_inverter_sop.md",
+      "retrieved_top_source": "solar_inverter_sop.md",
+      "source_correct": true,
+      "expected_source_rank": 1,
+      "retrieved_sources": [
+        "solar_inverter_sop.md"
+      ],
+      "retrieval_scores": [
+        0.2669
+      ],
+      "answer": "LLM not configured. Retrieved context: Solar Inverter SOP\nIf inverter temperature exceeds 75C, inspect cooling fans, dust filters, ambient temperature, and DC input imbalance. If repeated derating occurs, create a priority maintenance ticket and verify SCADA alarms.",
+      "citations": [
+        {
+          "source": "solar_inverter_sop.md",
+          "chunk_id": 0,
+          "heading": "Solar Inverter SOP",
+          "relevance": 0.2669
+        }
+      ],
+      "hallucination_check": "PASS",
+      "hallucination_details": {
+        "status": "PASS",
+        "label": "PASS",
+        "coverage": 1.0,
+        "threshold": 0.7,
+        "content_words": 26,
+        "matched_words": 26,
+        "unsupported_words": [],
+        "sentences": [
+          {
+            "text": "Solar Inverter SOP\nIf inverter temperature exceeds 75C, inspect cooling fans, dust filters, ambient temperature, and DC input imbalance.",
+            "coverage": 1.0,
+            "supported": true,
+            "unsupported_words": []
+          },
+          {
+            "text": "If repeated derating occurs, create a priority maintenance ticket and verify SCADA alarms.",
+            "coverage": 1.0,
+            "supported": true,
+            "unsupported_words": []
+          }
+        ],
+        "note": "Answer is a deterministic fallback, not a model completion (llm_status=not_configured)."
+      },
+      "llm_status": "not_configured",
+      "llm_error": "GROQ_API_KEY is not set",
+      "model": "llama-3.3-70b-versatile",
+      "embedding_model": "tfidf-fallback",
+      "latency_ms": 0.8
+    },
+    {
+      "question": "How should gearbox vibration be investigated?",
+      "expected_source": "wind_turbine_maintenance.md",
+      "retrieved_top_source": "wind_turbine_maintenance.md",
+      "source_correct": true,
+      "expected_source_rank": 1,
+      "retrieved_sources": [
+        "wind_turbine_maintenance.md"
+      ],
+      "retrieval_scores": [
+        0.2929
+      ],
+      "answer": "LLM not configured. Retrieved context: Wind Turbine Maintenance\nHigh gearbox vibration combined with rising nacelle temperature may indicate lubrication issues or bearing wear. Recommended checks: vibration spectrum, oil level, oil contamination, and recent wind gust events.",
+      "citations": [
+        {
+          "source": "wind_turbine_maintenance.md",
+          "chunk_id": 0,
+          "heading": "Wind Turbine Maintenance",
+          "relevance": 0.2929
+        }
+      ],
+      "hallucination_check": "PASS",
+      "hallucination_details": {
+        "status": "PASS",
+        "label": "PASS",
+        "coverage": 1.0,
+        "threshold": 0.7,
+        "content_words": 26,
+        "matched_words": 26,
+        "unsupported_words": [],
+        "sentences": [
+          {
+            "text": "Wind Turbine Maintenance\nHigh gearbox vibration combined with rising nacelle temperature may indicate lubrication issues or bearing wear.",
+            "coverage": 1.0,
+            "supported": true,
+            "unsupported_words": []
+          },
+          {
+            "text": "Recommended checks: vibration spectrum, oil level, oil contamination, and recent wind gust events.",
+            "coverage": 1.0,
+            "supported": true,
+            "unsupported_words": []
+          }
+        ],
+        "note": "Answer is a deterministic fallback, not a model completion (llm_status=not_configured)."
+      },
+      "llm_status": "not_configured",
+      "llm_error": "GROQ_API_KEY is not set",
+      "model": "llama-3.3-70b-versatile",
+      "embedding_model": "tfidf-fallback",
+      "latency_ms": 0.7
+    }
+  ]
+}
