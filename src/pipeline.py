@@ -44,12 +44,14 @@ class RAGService:
         chunk_words: int = chunker.CHUNK_WORDS,
         overlap_words: int = chunker.OVERLAP_WORDS,
     ) -> "RAGService":
+        """Load documents and build all reusable retrieval components once."""
         started = time.perf_counter()
         documents = chunker.load_documents(data_dir)
         chunks = chunker.chunk_corpus(documents, target_words=chunk_words, overlap_words=overlap_words)
 
         # Build the embedder over the chunk texts (TF-IDF fallback fits on them).
         embedder = build_embedder([chunk.text for chunk in chunks], backend=embedding_backend)
+        # Embed every chunk once; later requests only need to embed their question.
         embeddings = embedder.encode([chunk.text for chunk in chunks])
         retriever = Retriever(chunks, embeddings)
 
@@ -67,6 +69,7 @@ class RAGService:
 
     # ----------------------------------------------------------------- query
     def retrieve(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
+        """Embed a question, find its nearest chunks, and discard zero-score hits."""
         query_vector = self.embedder.encode(question)
         matches = self.retriever.search(query_vector, top_k or self.top_k)
         # Drop exact-zero matches: with the TF-IDF fallback these are documents
@@ -75,6 +78,7 @@ class RAGService:
         return [match for match in matches if match.score > 0.0]
 
     def answer(self, question: str, top_k: int | None = None) -> dict:
+        """Run retrieval, optional generation, support checking, and response assembly."""
         question = (question or "").strip()
         if not question:
             raise ValueError("Question must not be empty")
@@ -82,6 +86,7 @@ class RAGService:
         started = time.perf_counter()
         retrieved = self.retrieve(question, top_k)
 
+        # Never call the LLM without evidence; no matches means a clear refusal.
         if retrieved:
             generation = llm.generate_answer(question, retrieved)
             verdict = check_answer(generation.text, [item.chunk.text for item in retrieved])
@@ -103,6 +108,7 @@ class RAGService:
                 f"(llm_status={generation.status})."
             )
 
+        # Measure request processing time in milliseconds for observability.
         latency_ms = round((time.perf_counter() - started) * 1000, 1)
 
         return {
@@ -132,6 +138,7 @@ class RAGService:
 
     # ---------------------------------------------------------------- status
     def health(self) -> dict:
+        """Return readiness and configuration details for the health endpoint."""
         return {
             "status": "ok",
             "corpus": chunker.corpus_stats(self.documents, self.chunks),

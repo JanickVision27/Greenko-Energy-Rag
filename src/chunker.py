@@ -56,9 +56,11 @@ class Chunk:
 
     @property
     def citation(self) -> str:
+        """Return the compact citation label used in generated answers."""
         return f"[{self.source_file}, chunk {self.chunk_id}]"
 
     def to_dict(self) -> dict:
+        """Convert the chunk and its metadata to a JSON-friendly dictionary."""
         return {
             "source": self.source_file,
             "chunk_id": self.chunk_id,
@@ -89,6 +91,7 @@ def load_documents(data_dir: str | Path) -> list[Document]:
 
 
 def _first_heading(text: str) -> str | None:
+    """Return the first Markdown heading, or None when the file has none."""
     for line in text.splitlines():
         match = _HEADING.match(line)
         if match:
@@ -108,6 +111,7 @@ def split_sections(text: str) -> list[tuple[str, str]]:
     body: list[str] = []
 
     def flush() -> None:
+        """Append the accumulated body under its current heading, if nonempty."""
         block = "\n".join(body).strip()
         if block:
             sections.append((heading, block))
@@ -125,6 +129,7 @@ def split_sections(text: str) -> list[tuple[str, str]]:
 
 
 def _split_sentences(block: str) -> list[str]:
+    """Normalize whitespace and split a section body into sentences."""
     cleaned = re.sub(r"[ \t]+", " ", block)
     parts = [p.strip() for p in _SENTENCE_SPLIT.split(cleaned) if p.strip()]
     return parts or [cleaned.strip()]
@@ -231,6 +236,7 @@ def chunk_corpus(
 def corpus_stats(documents: Iterable[Document], chunks: Iterable[Chunk]) -> dict:
     """Small summary used by ``/api/health`` and the evaluation report."""
 
+    # Materialize once because inputs may be generators and are used more than once.
     docs = list(documents)
     chs = list(chunks)
     per_source: dict[str, int] = {}

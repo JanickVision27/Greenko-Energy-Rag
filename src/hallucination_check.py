@@ -57,6 +57,7 @@ def _stem(word: str) -> str:
     """Crude, dependency-free normalisation (good enough for lexical overlap)."""
 
     word = word.lower().strip("-'")
+    # This is lightweight normalization, not full linguistic stemming.
     if len(word) > 4 and word.endswith("ies"):
         return word[:-3] + "y"
     for suffix in ("ing", "ed"):
@@ -73,6 +74,7 @@ def _stem(word: str) -> str:
 def content_words(text: str) -> list[str]:
     """Return normalised content words (stopwords and citations removed)."""
 
+    # Ignore citation labels so filenames and chunk numbers do not inflate support.
     lowered = _CITATION.sub(" ", text or "")
     words: list[str] = []
     for raw in _TOKEN.findall(lowered):
@@ -86,6 +88,7 @@ def content_words(text: str) -> list[str]:
 
 
 def _strip_boilerplate(answer: str) -> str:
+    """Remove fallback labels so the support score covers the actual answer."""
     text = (answer or "").strip()
     text = _FALLBACK_PREFIX.sub("", text)
     text = _CONTEXT_LABEL.sub("", text)
@@ -93,6 +96,7 @@ def _strip_boilerplate(answer: str) -> str:
 
 
 def _split_sentences(text: str) -> list[str]:
+    """Split answer text into sentences for per-sentence support details."""
     parts = [p.strip() for p in _SENTENCE_SPLIT.split(text) if p.strip()]
     return parts or ([text.strip()] if text.strip() else [])
 
@@ -104,6 +108,7 @@ def check_answer(
 ) -> dict:
     """Score how well ``answer`` is supported by ``context_texts``."""
 
+    # A set makes lookups fast and avoids counting repeated context words specially.
     context_vocab = {word for text in context_texts for word in content_words(text)}
     claim_text = _strip_boilerplate(answer or "")
 
@@ -135,6 +140,7 @@ def check_answer(
             "note": "No content words to verify.",
         }
 
+    # Coverage counts repeated answer terms; unsupported_words is a unique review list.
     supported = [word for word in answer_words if word in context_vocab]
     unsupported = sorted({word for word in answer_words if word not in context_vocab})
     coverage = len(supported) / len(answer_words)

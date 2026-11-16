@@ -42,6 +42,7 @@ LOGGER = logging.getLogger("evaluate")
 
 
 def run(data_dir: Path, questions_csv: Path, top_k: int, output: Path) -> dict:
+    """Run labeled questions through the real pipeline and write a JSON report."""
     service = RAGService.build(data_dir, top_k=top_k)
     frame = pd.read_csv(questions_csv)
     for column in ("question", "expected_source"):
@@ -49,6 +50,7 @@ def run(data_dir: Path, questions_csv: Path, top_k: int, output: Path) -> dict:
             raise ValueError(f"{questions_csv} is missing the '{column}' column")
 
     records = []
+    # Iterate as named row objects instead of repeatedly indexing the DataFrame.
     for row in frame.itertuples(index=False):
         question = str(row.question).strip()
         expected_source = str(row.expected_source).strip()
@@ -56,6 +58,7 @@ def run(data_dir: Path, questions_csv: Path, top_k: int, output: Path) -> dict:
 
         retrieved_sources = [item["source"] for item in result["retrieved_chunks"]]
         top_source = retrieved_sources[0] if retrieved_sources else None
+        # Rank is one-based for readers; None means the expected source was not found.
         expected_rank = (
             retrieved_sources.index(expected_source) + 1 if expected_source in retrieved_sources else None
         )
@@ -92,6 +95,7 @@ def run(data_dir: Path, questions_csv: Path, top_k: int, output: Path) -> dict:
     total = len(records)
     correct = sum(1 for record in records if record["source_correct"])
     llm_ok = sum(1 for record in records if record["llm_status"] == "ok")
+    # Keep aggregate metrics alongside per-question details for easy review.
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "pipeline": {
@@ -123,12 +127,14 @@ def run(data_dir: Path, questions_csv: Path, top_k: int, output: Path) -> dict:
 
 
 def main() -> int:
+    """Parse command-line options, run evaluation, and print a short summary."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description="Evaluate the RAG pipeline on data/questions.csv")
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--questions", type=Path, default=DEFAULT_DATA_DIR / "questions.csv")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--output", type=Path, default=REPO_ROOT / "outputs" / "evaluation_results.json")
+    # argparse supplies defaults while allowing alternate inputs and output paths.
     args = parser.parse_args()
 
     report = run(args.data_dir, args.questions, args.top_k, args.output)

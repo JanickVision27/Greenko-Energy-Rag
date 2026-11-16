@@ -38,6 +38,7 @@ logging.basicConfig(
 LOGGER = logging.getLogger("energy_rag")
 
 SERVICE: RAGService | None = None
+# FastAPI startup fills this shared service before request handlers use it.
 
 
 @asynccontextmanager
@@ -66,6 +67,7 @@ app = FastAPI(
 
 
 class Query(BaseModel):
+    """JSON request schema for POST /api/run."""
     text: str = Field(default="", description="Operational question to answer from the SOP corpus")
 
 
@@ -73,6 +75,7 @@ class Query(BaseModel):
 def health() -> JSONResponse:
     """Readiness probe: corpus size, embedding backend, whether the LLM is configured."""
 
+    # 503 tells a browser or deployment platform that startup is not complete.
     if SERVICE is None:
         return JSONResponse(status_code=503, content={"status": "starting"})
     return JSONResponse(status_code=200, content=SERVICE.health())
@@ -113,12 +116,14 @@ def run_case(query: Query) -> dict:
 
     if SERVICE is None:
         raise HTTPException(status_code=503, detail="Service is still starting")
+    # Strip whitespace before validation so a spaces-only value is rejected.
     question = (query.text or "").strip()
     if not question:
         raise HTTPException(status_code=422, detail="Field 'text' must contain a question")
     if len(question) > 1000:
         raise HTTPException(status_code=422, detail="Question is too long (max 1000 characters)")
 
+    # Log internal details, but return a concise error instead of a stack trace.
     try:
         response = SERVICE.answer(question)
     except Exception as exc:  # surface a clean error instead of a stack trace to the UI

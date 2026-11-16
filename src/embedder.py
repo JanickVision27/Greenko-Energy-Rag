@@ -35,7 +35,9 @@ TFIDF_BACKEND = "tfidf-fallback"
 
 
 def _l2_normalize(matrix: np.ndarray) -> np.ndarray:
+    """Scale each row to unit length; leave zero rows as zero rows."""
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    # Avoid dividing a zero vector by zero; it still remains a zero vector.
     norms[norms == 0.0] = 1.0
     return (matrix / norms).astype(np.float32)
 
@@ -44,6 +46,7 @@ class Embedder:
     """Turns text into L2-normalised vectors with a documented fallback path."""
 
     def __init__(self, model_name: str = DEFAULT_MODEL_NAME, backend: str = "auto") -> None:
+        """Store configuration; actual model setup happens later in fit()."""
         self.requested_backend = (backend or "auto").strip().lower()
         self.model_name = model_name
         self.backend = "uninitialised"
@@ -73,6 +76,7 @@ class Embedder:
         return self
 
     def _try_sentence_transformers(self) -> bool:
+        """Load the dense embedding model; return False with a reason on failure."""
         try:
             from sentence_transformers import SentenceTransformer  # type: ignore
         except Exception as exc:  # ImportError, or a broken torch install
@@ -92,6 +96,7 @@ class Embedder:
         return True
 
     def _fit_tfidf(self, corpus: Sequence[str]) -> None:
+        """Fit a keyword-based vectorizer as the offline/lightweight backend."""
         from sklearn.feature_extraction.text import TfidfVectorizer
 
         self._vectorizer = TfidfVectorizer(
@@ -117,6 +122,7 @@ class Embedder:
     def encode(self, texts: Sequence[str] | str) -> np.ndarray:
         """Return an ``(n, d)`` float32 matrix of unit-length vectors."""
 
+        # Preserve a single input as a vector while accepting batches as matrices.
         single = isinstance(texts, str)
         batch = [texts] if single else list(texts)
         if not batch:
@@ -142,6 +148,7 @@ class Embedder:
     # ------------------------------------------------------------- reporting
     @property
     def dimension(self) -> int:
+        """Report the number of values in each vector for the active backend."""
         if self.backend == "sentence-transformers":
             return int(self._model.get_sentence_embedding_dimension())  # type: ignore[union-attr]
         if self.backend == TFIDF_BACKEND:
@@ -150,11 +157,13 @@ class Embedder:
 
     @property
     def display_name(self) -> str:
+        """Return a readable model/backend name for API responses and logs."""
         if self.backend == "sentence-transformers":
             return self.model_name
         return TFIDF_BACKEND
 
     def describe(self) -> dict:
+        """Expose embedding configuration without returning model internals."""
         return {
             "embedding_model": self.display_name,
             "embedding_backend": self.backend,
@@ -171,6 +180,7 @@ def build_embedder(
 ) -> Embedder:
     """Convenience factory honouring the ``EMBEDDING_BACKEND`` env var."""
 
+    # An explicit function argument wins; otherwise use environment configuration.
     selected = backend or os.getenv("EMBEDDING_BACKEND", "auto")
     embedder = Embedder(
         model_name=model_name or os.getenv("EMBEDDING_MODEL", DEFAULT_MODEL_NAME),

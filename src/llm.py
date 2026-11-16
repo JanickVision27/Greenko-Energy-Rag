@@ -38,6 +38,7 @@ NO_ANSWER_SENTENCE = "I cannot find this in the provided documents."
 
 @dataclass
 class AnswerResult:
+    """Keep model output and its status together, including fallback cases."""
     text: str
     model: str = MODEL_NAME
     status: str = "ok"  # ok | not_configured | error
@@ -47,12 +48,14 @@ class AnswerResult:
 
     @property
     def is_fallback(self) -> bool:
+        """True when the answer did not come from a successful model response."""
         return self.status != "ok"
 
 
 def format_context(retrieved: Sequence[RetrievedChunk]) -> str:
     """Render retrieved chunks in the numbered, citable block the prompt expects."""
 
+    # Numbered blocks make passages easy for the model to reference in citations.
     blocks = []
     for rank, item in enumerate(retrieved, start=1):
         blocks.append(
@@ -63,6 +66,7 @@ def format_context(retrieved: Sequence[RetrievedChunk]) -> str:
 
 
 def build_messages(question: str, retrieved: Sequence[RetrievedChunk]) -> list[dict]:
+    """Build chat messages that constrain the model to retrieved evidence."""
     user_prompt = (
         f"Question: {question.strip()}\n\n"
         f"Retrieved context:\n{format_context(retrieved)}\n\n"
@@ -75,11 +79,13 @@ def build_messages(question: str, retrieved: Sequence[RetrievedChunk]) -> list[d
 
 
 def fallback_text(retrieved: Sequence[RetrievedChunk]) -> str:
+    """Return the best retrieved passage when model generation is unavailable."""
     top = retrieved[0].chunk.text if retrieved else "No chunks were retrieved."
     return f"LLM not configured. Retrieved context: {top}"
 
 
 def _error_fallback(reason: str, retrieved: Sequence[RetrievedChunk]) -> AnswerResult:
+    """Package a model failure with retrieved text so the UI can still respond."""
     top = retrieved[0].chunk.text if retrieved else "No chunks were retrieved."
     return AnswerResult(
         text=f"LLM call failed ({reason}). Retrieved context: {top}",
@@ -97,6 +103,7 @@ def generate_answer(
 ) -> AnswerResult:
     """Call Groq, or return a deterministic fallback when that is impossible."""
 
+    # Resolve secrets at call time so credentials are never stored in source code.
     key = (api_key if api_key is not None else os.getenv("GROQ_API_KEY", "")).strip()
     if not key:
         LOGGER.warning("GROQ_API_KEY is not set - returning context-only fallback answer")

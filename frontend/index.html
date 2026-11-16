@@ -78,6 +78,7 @@
 </header>
 
 <main class="wrap">
+  <!-- Intro and question form are the single-page app's main entry point. -->
   <div class="intro">
     <p class="eyebrow">Operations knowledge</p>
     <h2>Find the guidance you need.</h2>
@@ -100,7 +101,9 @@
     </div>
   </div>
 
+  <!-- JavaScript shows progress, validation, and request errors in this region. -->
   <div id="status" class="hidden"></div>
+  <!-- Results stay hidden until the API returns an answer. -->
 <section id="result" class="hidden" aria-live="polite">
     <div class="card">
       <div class="row" style="justify-content: space-between;">
@@ -147,15 +150,18 @@
   const statusBox = $("status");
   const result = $("result");
 
+  // Escape untrusted text before inserting it into HTML to prevent markup injection.
   const esc = (value) => String(value ?? "")
     .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 
   function showStatus(kind, html) {
+    // Reuse one status element for progress, validation messages, and errors.
     statusBox.className = "banner " + kind;
     statusBox.innerHTML = html;
     statusBox.classList.remove("hidden");
   }
+  // Hide the status message after a successful response.
   const clearStatus = () => statusBox.classList.add("hidden");
 
   // Render safe, minimal Markdown used by model answers and style citations.
@@ -195,12 +201,14 @@
   }
 
   function badgeFor(label) {
+    // Map the API's verdict into the matching visual badge style.
     if (label === "PASS") return "badge pass";
     if (label === "WARNING") return "badge warn";
     return "badge neutral";
   }
 
   function openChunk(index) {
+    // Citation buttons point to the matching retrieved-chunk card by its UI index.
     const el = document.getElementById("chunk-" + index);
     if (!el) return;
     el.open = true;
@@ -210,6 +218,7 @@
   }
 
   function render(data) {
+    // Populate every result panel from the API response object.
     $("answer").innerHTML = renderAnswer(data.answer);
 
     const details = data.hallucination_details || {};
@@ -218,6 +227,7 @@
     badge.className = badgeFor(label);
     badge.textContent = label === "PASS" ? "✓ Support check: PASS" : "⚠ Support check: WARNING";
 
+    // Coverage is sent as a fraction (0-1); display it as a percentage.
     const pct = typeof details.coverage === "number" ? Math.round(details.coverage * 100) : null;
     let cov = "";
     if (pct !== null) {
@@ -264,6 +274,7 @@
           </details>`).join("")
       : '<span class="muted">No chunks retrieved.</span>';
 
+    // Show model and latency fields so users can see which pipeline ran.
     const meta = [
       ["LLM", data.model],
       ["LLM status", data.llm_status],
@@ -279,6 +290,7 @@
   }
 
   async function ask(question) {
+    // Send a typed or example question, then render the JSON response or its error.
     const text = (question ?? input.value).trim();
     if (!text) {
       showStatus("info", "Type a question first.");
@@ -290,6 +302,7 @@
     showStatus("info", "Embedding the question, retrieving chunks and generating a grounded answer…");
 
     try {
+      // JSON.stringify turns the JavaScript object into the API's expected JSON body.
       const response = await fetch(API_BASE + "/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -312,7 +325,9 @@
     }
   }
 
+  // Prevent a full-page form submit; handle questions asynchronously instead.
   form.addEventListener("submit", (event) => { event.preventDefault(); ask(); });
+  // Example buttons fill the input and immediately run the selected question.
   $("examples").addEventListener("click", (event) => {
     const button = event.target.closest(".example");
     if (!button) return;
