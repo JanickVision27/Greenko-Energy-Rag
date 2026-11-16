@@ -220,11 +220,7 @@ def chunk_document(
     return chunks
 
 
-def chunk_corpus(
-    documents: Iterable[Document],
-    target_words: int = CHUNK_WORDS,
-    overlap_words: int = OVERLAP_WORDS,
-) -> list[Chunk]:
+def chunk_corpus( documents: Iterable[Document], target_words: int = CHUNK_WORDS, overlap_words: int = OVERLAP_WORDS,) -> list[Chunk]:
     """Chunk every document and return a flat, deterministic chunk list."""
 
     chunks: list[Chunk] = []

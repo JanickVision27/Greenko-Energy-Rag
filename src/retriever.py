@@ -73,6 +73,7 @@ class Retriever:
         # Both sides are unit vectors, so dot products are cosine similarities.
         similarities = self.matrix @ (query / norm)
         k = max(1, min(int(top_k), len(self.chunks)))
+        
         # Sort by descending score, then source and chunk ID to break ties consistently.
         order = sorted(
             range(len(self.chunks)),
